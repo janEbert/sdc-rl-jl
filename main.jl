@@ -11,6 +11,7 @@ include("CFlux.jl")
 # Arguments
 
 const seed = 0
+const test_on_random = false
 const use_fixed_test_rng = false
 const test_seed = 1
 
@@ -230,23 +231,23 @@ function episode_loss!(env, model, stepwise=true)
     total_loss
 end
 
-# function test_model!(env, model, num_test_episodes)
-#     if use_fixed_test_rng
-#         test_rng = Random.MersenneTwister(test_seed)
-#     else
-#         test_rng = Random.GLOBAL_RNG
-#     end
+function test_model_random!(env, model, num_test_episodes)
+    if use_fixed_test_rng
+        test_rng = Random.MersenneTwister(test_seed)
+    else
+        test_rng = Random.GLOBAL_RNG
+    end
 
-#     losses = Float64[]
-#     for _ in 1:num_test_episodes
-#         reset!(env, test_rng)
-#         loss = episode_loss!(env, model, predict_stepwise)
-#         push!(losses, loss)
-#     end
-#     losses
-# end
+    losses = Float64[]
+    for _ in 1:num_test_episodes
+        reset!(env, test_rng)
+        loss = episode_loss!(env, model, predict_stepwise)
+        push!(losses, loss)
+    end
+    losses
+end
 
-function test_model!(env, model, num_test_episodes)
+function test_model_linrange!(env, model, num_test_episodes)
     lambdas = range(0, -100, length=num_test_episodes)
 
     losses = Float64[]
@@ -258,10 +259,18 @@ function test_model!(env, model, num_test_episodes)
     losses
 end
 
+function test_model!(env, model, num_test_episodes)
+    if test_on_random
+        return test_model_random!(env, model, num_test_episodes)
+    end
+    test_model_linrange!(env, model, num_test_episodes)
+end
+
 function build_argsdict()
     args = Dict{Symbol, Any}()
 
     args[:seed] = seed
+    args[:test_on_random] = test_on_random
     args[:use_fixed_test_rng] = use_fixed_test_rng
     args[:test_seed] = test_seed
 
