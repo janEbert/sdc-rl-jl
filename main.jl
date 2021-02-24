@@ -76,7 +76,7 @@ function build_layer(input_size, output_size, ::Any, initW, initb,
     layer
 end
 
-function build_layer(input_size, output_size, activation, initW, initb)
+function build_layer(input_size, output_size, activation; initW, initb)
     build_layer(input_size, output_size, activation, initW, initb, hidden_layer_type)
 end
 
@@ -87,14 +87,14 @@ function build_model(hidden_layers)
     end
     push!(layers, build_layer(prod(INPUT_SIZE), first(hidden_layers),
                               activation_function,
-                              glorot_uniform(PARAMETER_TYPE),
-                              init_bias(PARAMETER_TYPE)))
+                              initW=glorot_uniform(PARAMETER_TYPE),
+                              initb=init_bias(PARAMETER_TYPE)))
     prev_layer_size = first(hidden_layers)
 
     for layer_size in hidden_layers[begin + 1:end]
         layer = build_layer(prev_layer_size, layer_size, activation_function,
-                            glorot_uniform(PARAMETER_TYPE),
-                            init_bias(PARAMETER_TYPE))
+                            initW=glorot_uniform(PARAMETER_TYPE),
+                            initb=init_bias(PARAMETER_TYPE))
         prev_layer_size = layer_size
         push!(layers, layer)
     end
