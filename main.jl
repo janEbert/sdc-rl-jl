@@ -324,41 +324,47 @@ function test_model!(env, model, num_test_episodes)
     test_model_linrange!(env, model, num_test_episodes)
 end
 
-function build_argsdict()
-    args = Dict{Symbol, Any}()
+function build_argslist()
+    args = Vector{Symbol}()
+    values = Vector{Any}()
 
-    args[:seed] = seed
-    args[:test_on_random] = test_on_random
-    args[:use_fixed_test_rng] = use_fixed_test_rng
-    args[:test_seed] = test_seed
+    for arg in [
+        :seed,
+        :test_on_random,
+        :use_fixed_test_rng,
+        :test_seed,
 
-    args[:M] = M
-    args[:dt] = dt
-    args[:restol] = restol
-    args[:max_sequence_length] = max_sequence_length
-    args[:max_episode_length] = max_episode_length
-    args[:lambda_real_interval] = lambda_real_interval
-    args[:lambda_imag_interval] = lambda_imag_interval
+        :M,
+        :dt,
+        :restol,
+        :max_sequence_length,
+        :max_episode_length,
+        :lambda_real_interval,
+        :lambda_imag_interval,
 
-    args[:lr] = lr
-    args[:hidden_layers] = hidden_layers
-    args[:hidden_layer_type] =  hidden_layer_type
-    args[:activation_function] = activation_function
-    args[:predict_stepwise] = predict_stepwise
-    args[:concat_inputs] = concat_inputs
-    args[:use_baseline_model] = use_baseline_model
+        :lr,
+        :hidden_layers,
+        :hidden_layer_type,
+        :activation_function,
+        :predict_stepwise,
+        :concat_inputs,
+        :use_baseline_model,
 
-    args[:use_complex_numbers] = use_complex_numbers
-    args[:conjugate_gradients] = conjugate_gradients
-    args[:convert_input_to_real] = convert_input_to_real
-    args[:convert_output_to_real] = convert_output_to_real
+        :use_complex_numbers,
+        :conjugate_gradients,
+        :convert_input_to_real,
+        :convert_output_to_real,
 
-    args[:num_episodes] = num_episodes
-    args[:test_interval] = test_interval
-    args[:num_training_test_episodes] = num_training_test_episodes
-    args[:num_test_episodes] = num_test_episodes
+        :num_episodes,
+        :test_interval,
+        :num_training_test_episodes,
+        :num_test_episodes,
+    ]
+        push!(args, arg)
+        push!(values, getfield(@__MODULE__, arg))
+    end
 
-    args
+    (args, values)
 end
 
 function log_with(logger, message)
@@ -376,7 +382,7 @@ function main()
 
     logfile = open("logs_$script_start_time.jld2", "w")
     logger = Logging.SimpleLogger(logfile)
-    JLD2.@save "args_$script_start_time.jld2" {compress=true} args=build_argsdict()
+    JLD2.@save "args_$script_start_time.jld2" {compress=true} args=build_argslist()
 
     model = build_model(hidden_layers)
 
