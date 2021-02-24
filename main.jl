@@ -37,6 +37,7 @@ const activation_function = crelu
 # const activation_function = silu
 const predict_stepwise = true
 const concat_inputs = true
+const use_baseline_model = true
 
 const use_complex_numbers = true
 # See at the bottom of this section, list item 2:
@@ -107,13 +108,43 @@ function build_hidden_layers(hidden_layers)
     layers
 end
 
+function build_baseline_hidden_layers(hidden_layers)
+    layers = Any[Flux.Dense(prod(INPUT_SIZE), first(hidden_layers), tanh,
+                            initW=glorot_uniform(PARAMETER_TYPE),
+                            initb=init_bias(PARAMETER_TYPE))]
+    prev_layer_size = first(hidden_layers)
+
+    for layer_size in hidden_layers[begin + 1:end - 1]
+        layer = Flux.Dense(prev_layer_size, layer_size, tanh,
+                           initW=glorot_uniform(PARAMETER_TYPE),
+                           initb=init_bias(PARAMETER_TYPE))
+        prev_layer_size = layer_size
+        push!(layers, layer)
+    end
+
+    push!(layers, LSTM(prev_layer_size, last(hidden_layers),
+                       initW=glorot_uniform(PARAMETER_TYPE),
+                       initb=init_bias(PARAMETER_TYPE),
+                       init_state=(dims...) -> zeros(PARAMETER_TYPE, dims...)))
+    prev_layer_size = last(hidden_layers)
+
+    push!(layers, Flux.Dense(prev_layer_size, OUTPUT_SIZE,
+                             initW=glorot_uniform(PARAMETER_TYPE),
+                             initb=init_bias(PARAMETER_TYPE)))
+    layers
+end
+
 function build_model(hidden_layers)
     layers = Any[x -> reshape(x, :)]
     if convert_input_to_real
         push!(layers, real)
     end
 
-    append!(layers, build_hidden_layers(hidden_layers))
+    if use_baseline_model
+        append!(layers, build_baseline_hidden_layers(hidden_layers))
+    else
+        append!(layers, build_hidden_layers(hidden_layers))
+    end
 
     if convert_output_to_real
         push!(layers, real)
@@ -309,6 +340,7 @@ function build_argsdict()
     args[:activation_function] = activation_function
     args[:predict_stepwise] = predict_stepwise
     args[:concat_inputs] = concat_inputs
+    args[:use_baseline_model] = use_baseline_model
 
     args[:use_complex_numbers] = use_complex_numbers
     args[:conjugate_gradients] = conjugate_gradients
