@@ -57,7 +57,8 @@ mutable struct SDCEnv{L <: Number}
     restol::Float64
     max_sequence_length::Int
     max_episode_length::Int
-    num_steps::Int
+    lambda_real_interval::Tuple{Int, Int}
+    lambda_imag_interval::Tuple{Int, Int}
 
     num_nodes::Int
     Q::Matrix{Float64}
@@ -66,6 +67,7 @@ mutable struct SDCEnv{L <: Number}
 
     # Mutable
 
+    num_steps::Int
     preconditioner::AbstractPreconditioner
 
     lambda::L
@@ -91,7 +93,8 @@ mutable struct SDCEnv{L <: Number}
         num_steps = 0
 
         new(M, dt, restol, max_sequence_length, max_episode_length,
-            num_steps, num_nodes, Q, initial_u, preconditioner)
+            lambda_real_interval, lambda_imag_interval,
+            num_nodes, Q, initial_u, num_steps, preconditioner)
     end
 end
 
@@ -101,6 +104,14 @@ end
 
 function set_preconditioner!(env, preconditioner)
     env.preconditioner = preconditioner
+end
+
+function generate_lambda(env::SDCEnv{L}) where {L}
+    generate_lambda(env.lambda_real_interval, env.lambda_imag_interval, L)
+end
+
+function generate_lambda(rng, env::SDCEnv{L}) where {L}
+    generate_lambda(rng, env.lambda_real_interval, env.lambda_imag_interval, L)
 end
 
 function generate_lambda(lambda_real_interval,
@@ -130,7 +141,7 @@ function reset!(env)
 end
 
 function reset!(rng, env::SDCEnv{L}) where {L}
-    env.lambda = generate_lambda(rng, (-100, 0), (0, 10), L)
+    env.lambda = generate_lambda(rng, env)
     init!(env)
 end
 
