@@ -20,6 +20,8 @@ const dt = 1.0
 const restol = 1e-10
 const max_sequence_length = 4
 const max_episode_length = 50
+const lambda_real_interval = (-100, 0)
+const lambda_imag_interval = (0, 0)
 
 const lr = 0.0003
 const hidden_layers = [64, 64]
@@ -279,6 +281,8 @@ function build_argsdict()
     args[:restol] = restol
     args[:max_sequence_length] = max_sequence_length
     args[:max_episode_length] = max_episode_length
+    args[:lambda_real_interval] = lambda_real_interval
+    args[:lambda_imag_interval] = lambda_imag_interval
 
     args[:lr] = lr
     args[:hidden_layers] = hidden_layers
@@ -310,7 +314,8 @@ function main()
 
     opt = Flux.ADAM(lr)
 
-    env = SDCEnv{PARAMETER_TYPE}(M, dt, restol, max_sequence_length, max_episode_length)
+    env = SDCEnv{PARAMETER_TYPE}(M, dt, restol, max_sequence_length, max_episode_length,
+                                 lambda_real_interval, lambda_imag_interval)
 
     test_loss = mean(test_model!(env, model, num_training_test_episodes))
     println("Mean test loss after 0 episodes of training: ", test_loss)
