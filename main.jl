@@ -126,26 +126,28 @@ function episode_over(env)
     env.last_residual_norm < env.restol || env.num_steps >= max_episode_length
 end
 
+function step_loss(env, model, input, u, residual, action=nothing)
+    if isnothing(action)
+        (padded_input, input) = build_input(input, u, residual, env.num_steps)
+        action = model(padded_input)
+    end
+    (u, residual) = step!(env, u, residual, action)
+
+    if any(isnan, residual)
+        error("Error! Encountered NaN value.")
+    end
+    env.last_residual_norm + env.num_steps
+end
+
 function sequence_loss(env, model, u, residual, fixed_action=nothing)
     Flux.reset!(model)
-    if !isnothing(fixed_action)
-        action = fixed_action
-    end
 
     input = nothing
     start_num_steps = env.num_steps
     total_loss = 0.0
     while !episode_over(env) && env.num_steps - start_num_steps < max_sequence_length
-        if isnothing(fixed_action)
-            (padded_input, input) = build_input(input, u, residual, env.num_steps)
-            action = model(padded_input)
-        end
-        (u, residual) = step!(env, u, residual, action)
-
-        if any(isnan, residual)
-            error("Error! Encountered NaN value.")
-        end
-        total_loss += env.last_residual_norm + env.num_steps
+        loss = step_loss(env, model, input, u, residual, fixed_action)
+        total_loss += loss
     end
 
     return total_loss
