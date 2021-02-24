@@ -86,15 +86,11 @@ function build_layer(input_size, output_size, activation; initW, initb)
     build_layer(input_size, output_size, activation, initW, initb, hidden_layer_type)
 end
 
-function build_model(hidden_layers)
-    layers = Any[x -> reshape(x, :)]
-    if convert_input_to_real
-        push!(layers, real)
-    end
-    push!(layers, build_layer(prod(INPUT_SIZE), first(hidden_layers),
-                              activation_function,
-                              initW=glorot_uniform(PARAMETER_TYPE),
-                              initb=init_bias(PARAMETER_TYPE)))
+function build_hidden_layers(hidden_layers)
+    layers = Any[build_layer(prod(INPUT_SIZE), first(hidden_layers),
+                             activation_function,
+                             initW=glorot_uniform(PARAMETER_TYPE),
+                             initb=init_bias(PARAMETER_TYPE))]
     prev_layer_size = first(hidden_layers)
 
     for layer_size in hidden_layers[begin + 1:end]
@@ -108,6 +104,17 @@ function build_model(hidden_layers)
     push!(layers, Flux.Dense(prev_layer_size, OUTPUT_SIZE,
                              initW=glorot_uniform(PARAMETER_TYPE),
                              initb=init_bias(PARAMETER_TYPE)))
+    layers
+end
+
+function build_model(hidden_layers)
+    layers = Any[x -> reshape(x, :)]
+    if convert_input_to_real
+        push!(layers, real)
+    end
+
+    append!(layers, build_hidden_layers(hidden_layers))
+
     if convert_output_to_real
         push!(layers, real)
     end
