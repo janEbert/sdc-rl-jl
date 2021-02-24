@@ -36,6 +36,7 @@ const activation_function = crelu
 # const activation_function = softplus
 # const activation_function = silu
 const predict_stepwise = true
+const concat_inputs = true
 
 const use_complex_numbers = true
 # See at the bottom of this section, list item 2:
@@ -59,7 +60,11 @@ const num_test_episodes = 5000
 # Calculated from arguments
 
 const PARAMETER_TYPE = use_complex_numbers ? Complex{Float64} : Float64
-const INPUT_SIZE = (M * 2 + 1, max_sequence_length)
+const INPUT_SIZE = if concat_inputs
+    (M * 2 + 1, max_sequence_length)
+else
+    (M * 2 + 1,)
+end
 const OUTPUT_SIZE = M
 const PADDING_ZEROS = zeros(PARAMETER_TYPE, INPUT_SIZE)
 
@@ -113,6 +118,10 @@ end
 
 function build_input(input, u, residual, num_steps)
     new_input = vcat(u, residual, num_steps)
+    if !concat_inputs
+        return new_input
+    end
+
     input = if !isnothing(input)
         hcat(input, new_input)
     else
@@ -292,6 +301,7 @@ function build_argsdict()
     args[:hidden_layer_type] =  hidden_layer_type
     args[:activation_function] = activation_function
     args[:predict_stepwise] = predict_stepwise
+    args[:concat_inputs] = concat_inputs
 
     args[:use_complex_numbers] = use_complex_numbers
     args[:conjugate_gradients] = conjugate_gradients
