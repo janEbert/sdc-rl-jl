@@ -13,6 +13,43 @@ end
 
 LSTM(a...; ka...) = Flux.Recur(LSTMCell(a...; ka...))
 
+struct CLSTMCell{A,V}
+    Wi::A
+    Wh::A
+    b::V
+    h::V
+    c::V
+end
+
+function CLSTMCell(in::Integer, out::Integer; initW, initb, init_state)
+    cell = CLSTMCell(initW(out * 4, in), initW(out * 4, out), initb(out * 4),
+                     init_state(out), init_state(out))
+    cell.b[Flux.gate(out, 2)] .= 1
+    return cell
+end
+
+function (m::CLSTMCell)((h, c), x)
+    b, o = m.b, size(h, 1)
+    g = m.Wi*x .+ m.Wh*h .+ b
+    input = sigmoid.(gate(g, o, 1))
+    forget = sigmoid.(gate(g, o, 2))
+    cell = tanh.(gate(g, o, 3))
+    output = sigmoid.(gate(g, o, 4))
+    c = forget .* c .+ input .* cell
+    h′ = output .* tanh.(c)
+    return (h′, c), h′
+end
+
+hidden(m::CLSTMCell) = (m.h, m.c)
+
+Flux.@functor CLSTMCell
+
+function Base.show(io::IO, l::CLSTMCell)
+    print(io, "CLSTMCell(", size(l.Wi, 2), ", ", size(l.Wi, 1)÷4, ")")
+end
+
+CLSTM(a...; ka...) = Flux.Recur(CLSTMCell(a...; ka...))
+
 # Initialization
 
 function glorot_uniform(rng::Random.AbstractRNG, type::Type{<:Number}, dims...)
