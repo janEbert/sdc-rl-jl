@@ -1,4 +1,5 @@
 import Dates
+import Logging
 import Random
 
 import Flux
@@ -305,11 +306,21 @@ function build_argsdict()
     args
 end
 
+function log_with(logger, message)
+    Logging.with_logger(logger) do
+        @info message
+    end
+    @info message
+end
+
 function main()
     # Setup
 
     script_start_time = replace(string(Dates.now()), ':' => '-')
     Random.seed!(seed)
+
+    logfile = open("logs_$script_start_time.jld2", "w")
+    logger = Logging.SimpleLogger(logfile)
     JLD2.@save "args_$script_start_time.jld2" {compress=true} args=build_argsdict()
 
     model = build_model(hidden_layers)
@@ -319,8 +330,10 @@ function main()
     env = SDCEnv{PARAMETER_TYPE}(M, dt, restol, max_sequence_length, max_episode_length,
                                  lambda_real_interval, lambda_imag_interval)
 
+    log_with(logger, string("Started script at ", script_start_time, "."))
     test_loss = mean(test_model!(env, model, num_training_test_episodes))
-    println("Mean test loss after 0 episodes of training: ", test_loss)
+    log_with(logger, string("Mean test loss after 0 episodes of training: ", test_loss))
+    flush(logfile)
 
     episode_losses = Float64[]
     start_time = time()
@@ -330,17 +343,21 @@ function main()
 
         if episode % test_interval == 0
             test_loss = mean(test_model!(env, model, num_training_test_episodes))
-            println(episode, " episodes; Mean test loss: ", test_loss, "; ",
-                    "Duration: ", time() - start_time, " sec")
+            log_with(logger,
+                     string(episode, " episodes; Mean test loss: ", test_loss, "; ",
+                            "Duration: ", time() - start_time, " sec"))
+            flush(logfile)
         end
     end
-    println("Done after ", time() - start_time, " seconds!")
+    log_with(logger, string("Done after ", time() - start_time, " seconds!"))
 
     JLD2.@save "episode_losses_$script_start_time.jld2" {compress=true} episode_losses
     JLD2.@save "model_$script_start_time.jld2" {compress=true} model=Flux.cpu(model)
     JLD2.@save "opt_$script_start_time.jld2" {compress=true} opt
     JLD2.@save("weights_$script_start_time.jld2", {compress=true},
                weights=Flux.params(model))
+
+    close(logfile)
 end
 
 
