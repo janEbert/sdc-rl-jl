@@ -24,22 +24,24 @@ const max_episode_length = 50
 const lambda_real_interval = (-100, 0)
 const lambda_imag_interval = (0, 0)
 
-const lr = 0.0003
-const hidden_layers = [64, 64]
-const hidden_layer_type = Flux.Dense
-# const hidden_layer_type = LSTM
+const lr = 0.0001
+const hidden_layers = [64, 64, 256]
+# const hidden_layer_type = Flux.Dense
+# const hidden_layer_type = CLSTM
+const hidden_layer_type = LSTM
 # const activation_function = identity
 # const activation_function = sigmoid
 # const activation_function = tanh
-const activation_function = crelu
-# const activation_function = Flux.relu
+# const activation_function = crelu
+# const activation_function = crelu2
+const activation_function = Flux.relu
 # const activation_function = softplus
 # const activation_function = silu
 const predict_stepwise = true
 const concat_inputs = true
 const use_baseline_model = true
 
-const use_complex_numbers = true
+const use_complex_numbers = false
 # See at the bottom of this section, list item 2:
 # https://jax.readthedocs.io/en/latest/notebooks/autodiff_cookbook.html#complex-numbers-and-differentiation
 # "We can use `grad` to optimize f: ℂ → ℝ functions, like real-valued
