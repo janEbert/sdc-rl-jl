@@ -44,6 +44,8 @@ const activation_function = Flux.relu
 const predict_stepwise = true
 const concat_inputs = true
 const use_baseline_model = true
+const model_checkpoint_path = nothing
+const opt_checkpoint_path = nothing
 
 const use_complex_numbers = false
 # See at the bottom of this section, list item 2:
@@ -141,6 +143,11 @@ function build_baseline_hidden_layers(hidden_layers)
     layers
 end
 
+function maybe_gpu(x)
+    # Flux.gpu(x)
+    x
+end
+
 function build_model(hidden_layers)
     layers = Any[x -> reshape(x, :)]
     if convert_input_to_real
@@ -157,8 +164,17 @@ function build_model(hidden_layers)
         push!(layers, real)
     end
     model = Flux.Chain(layers...)
-    # Flux.gpu(model)
-    model
+    maybe_gpu(model)
+end
+
+function load_model(checkpoint_path)
+    JLD2.@load checkpoint_path model
+    maybe_gpu(model)
+end
+
+function load_opt(checkpoint_path)
+    JLD2.@load checkpoint_path opt
+    maybe_gpu(opt)
 end
 
 function build_input(input, u, residual, num_steps)
@@ -350,6 +366,8 @@ function build_argslist()
         :predict_stepwise,
         :concat_inputs,
         :use_baseline_model,
+        :model_checkpoint_path,
+        :opt_checkpoint_path,
 
         :use_complex_numbers,
         :conjugate_gradients,
@@ -386,9 +404,17 @@ function main()
     logger = Logging.SimpleLogger(logfile)
     JLD2.@save "args_$script_start_time.jld2" {compress=true} args=build_argslist()
 
-    model = build_model(hidden_layers)
+    if !isnothing(model_checkpoint_path)
+        model = load_model(model_checkpoint_path)
+    else
+        model = build_model(hidden_layers)
+    end
 
-    opt = Flux.ADAM(lr)
+    if !isnothing(opt_checkpoint_path)
+        opt = load_opt(opt_checkpoint_path)
+    else
+        opt = Flux.ADAM(lr)
+    end
 
     env = SDCEnv{PARAMETER_TYPE}(M, dt, restol, max_sequence_length, max_episode_length,
                                  lambda_real_interval, lambda_imag_interval)
