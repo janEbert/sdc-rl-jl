@@ -15,6 +15,8 @@ const seed = 0
 const test_on_random = false
 const use_fixed_test_rng = false
 const test_seed = 1
+# Doesn't work with Zygote
+const use_gpu = false
 
 const M = 3
 const dt = 1.0
@@ -144,8 +146,10 @@ function build_baseline_hidden_layers(hidden_layers)
 end
 
 function maybe_gpu(x)
-    # Flux.gpu(x)
-    x
+    if !use_gpu
+        return x
+    end
+    Flux.gpu(x)
 end
 
 function build_model(hidden_layers)
@@ -413,7 +417,7 @@ function main()
     if !isnothing(opt_checkpoint_path)
         opt = load_opt(opt_checkpoint_path)
     else
-        opt = Flux.ADAM(lr)
+        opt = maybe_gpu(Flux.ADAM(lr))
     end
 
     env = SDCEnv{PARAMETER_TYPE}(M, dt, restol, max_sequence_length, max_episode_length,
