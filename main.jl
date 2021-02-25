@@ -63,6 +63,7 @@ const num_episodes = 50000
 const test_interval = 250
 const num_training_test_episodes = 20
 const num_test_episodes = 5000
+const checkpoint_interval = 5000
 
 # Calculated from arguments
 
@@ -359,6 +360,7 @@ function build_argslist()
         :test_interval,
         :num_training_test_episodes,
         :num_test_episodes,
+        :checkpoint_interval,
     ]
         push!(args, arg)
         push!(values, getfield(@__MODULE__, arg))
@@ -409,12 +411,18 @@ function main()
                             "Duration: ", time() - start_time, " sec"))
             flush(logfile)
         end
+        if episode % checkpoint_interval == 0
+            JLD2.@save("model_$(episode)_$script_start_time.jld2", {compress=true},
+                       model=Flux.cpu(model))
+            JLD2.@save("opt_$(episode)_$script_start_time.jld2", {compress=true},
+                       opt=Flux.cpu(opt))
+        end
     end
     log_with(logger, string("Done after ", time() - start_time, " seconds!"))
 
     JLD2.@save "episode_losses_$script_start_time.jld2" {compress=true} episode_losses
     JLD2.@save "model_$script_start_time.jld2" {compress=true} model=Flux.cpu(model)
-    JLD2.@save "opt_$script_start_time.jld2" {compress=true} opt
+    JLD2.@save "opt_$script_start_time.jld2" {compress=true} opt=Flux.cpu(opt)
     JLD2.@save("weights_$script_start_time.jld2", {compress=true},
                weights=Flux.params(model))
 
