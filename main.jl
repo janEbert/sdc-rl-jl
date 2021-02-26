@@ -443,15 +443,15 @@ function main()
             flush(logfile)
         end
         if episode % checkpoint_interval == 0
-            BSON.@save("model_$(episode)_$script_start_time.jld2", model=Flux.cpu(model))
-            BSON.@save("opt_$(episode)_$script_start_time.jld2", opt=Flux.cpu(opt))
+            BSON.@save("model_$(episode)_$script_start_time.bson", model=Flux.cpu(model))
+            BSON.@save("opt_$(episode)_$script_start_time.bson", opt=Flux.cpu(opt))
         end
     end
     log_with(logger, string("Done after ", time() - start_time, " seconds!"))
 
     JLD2.@save "episode_losses_$script_start_time.jld2" {compress=true} episode_losses
-    BSON.@save "model_$script_start_time.jld2" model=Flux.cpu(model)
-    BSON.@save "opt_$script_start_time.jld2" opt=Flux.cpu(opt)
+    BSON.@save "model_$script_start_time.bson" model=Flux.cpu(model)
+    BSON.@save "opt_$script_start_time.bson" opt=Flux.cpu(opt)
     JLD2.@save("weights_$script_start_time.jld2", {compress=true},
                weights=Flux.params(model))
 
