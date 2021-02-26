@@ -140,7 +140,7 @@ function reset!(env)
     reset!(Random.GLOBAL_RNG, env)
 end
 
-function reset!(rng, env::SDCEnv{L}) where {L}
+function reset!(rng, env)
     env.lambda = generate_lambda(rng, env)
     init!(env)
 end
