@@ -116,9 +116,6 @@ mutable struct CollGaussRadauRight
         self.delta_m = _gen_deltas(self)
         self.left_is_node = false
         self.right_is_node = true
-        # From NumPy to Julia ordering
-        self.Qmat = collect(transpose(_gen_Qmat(self)))
-        self.Smat = collect(transpose(_gen_Smat(self)))
         self
     end
 end
