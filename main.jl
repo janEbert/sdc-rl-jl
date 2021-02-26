@@ -179,7 +179,7 @@ end
 
 function load_opt(checkpoint_path)
     BSON.@load checkpoint_path opt
-    maybe_gpu(opt)
+    opt
 end
 
 function build_input(input, u, residual, num_steps)
@@ -418,7 +418,7 @@ function main()
     if !isnothing(opt_checkpoint_path)
         opt = load_opt(opt_checkpoint_path)
     else
-        opt = maybe_gpu(Flux.ADAM(lr))
+        opt = Flux.ADAM(lr)
     end
 
     env = SDCEnv{PARAMETER_TYPE}(M, dt, restol, max_sequence_length, max_episode_length,
