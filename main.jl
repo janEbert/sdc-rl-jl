@@ -399,21 +399,14 @@ function log_with(logger, message)
     @info message
 end
 
-function main()
+function main(model)
     # Setup
 
     script_start_time = replace(string(Dates.now()), ':' => '-')
-    Random.seed!(seed)
 
     logfile = open("logs_$script_start_time.jld2", "w")
     logger = Logging.SimpleLogger(logfile)
     JLD2.@save "args_$script_start_time.jld2" {compress=true} args=build_argslist()
-
-    if !isnothing(model_checkpoint_path)
-        model = load_model(model_checkpoint_path)
-    else
-        model = build_model(hidden_layers)
-    end
 
     if !isnothing(opt_checkpoint_path)
         opt = load_opt(opt_checkpoint_path)
@@ -460,5 +453,13 @@ end
 
 
 if abspath(PROGRAM_FILE) == @__FILE__
-    main()
+    Random.seed!(seed)
+
+    if !isnothing(model_checkpoint_path)
+        model = load_model(model_checkpoint_path)
+    else
+        model = build_model(hidden_layers)
+    end
+
+    main(model)
 end
