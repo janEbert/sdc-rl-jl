@@ -185,7 +185,7 @@ end
 function build_input(input, u, residual, num_steps)
     new_input = vcat(u, residual, num_steps)
     if !concat_inputs
-        return new_input
+        return maybe_gpu(new_input)
     end
 
     input = if !isnothing(input)
@@ -195,7 +195,7 @@ function build_input(input, u, residual, num_steps)
     end
     padded_input = hcat(input,
                         view(PADDING_ZEROS, :, 1:(max_sequence_length - size(input, 2))))
-    (padded_input, input)
+    (maybe_gpu(padded_input), input)
 end
 
 function episode_over(env)
