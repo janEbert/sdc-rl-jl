@@ -30,9 +30,9 @@ const lambda_imag_interval = (0, 0)
 const lr = 0.0001
 # Default baselines PPO2 LR
 # const lr = 0.00025
-const hidden_layers = [64, 64, 256]
+# const hidden_layers = [64, 64]
 # Default baselines MlpLstmPolicy
-# const hidden_layers = [64, 64, 256]
+const hidden_layers = [64, 64, 256]
 # const hidden_layer_type = Flux.Dense
 # const hidden_layer_type = CLSTM
 const hidden_layer_type = LSTM
