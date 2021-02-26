@@ -15,14 +15,14 @@ function get_preconditioner(env, action, ::RLPreconditioner)
     LinearAlgebra.Diagonal(action)
 end
 
-function get_preconditioner(env, action, ::LUPreconditioner)
+function get_preconditioner(env, ::Any, ::LUPreconditioner)
     Q_T = transpose(env.Q)
     factorization = LinearAlgebra.lu(Q_T)
     U = factorization.U
     transpose(U)
 end
 
-function get_preconditioner(env, action, ::MINPreconditioner)
+function get_preconditioner(env, ::Any, ::MINPreconditioner)
     if M == 5
         x = [
             0.2818591930905709,
@@ -38,8 +38,8 @@ function get_preconditioner(env, action, ::MINPreconditioner)
             0.3716708461097372,
         ]
     else
-        # if M is some other number, take zeros. This won't work
-        # well, but does not raise an error
+        # If M is some other number, take zeros. This won't work
+        # well, but does not raise an error.
         return zeros(M, M)
     end
     LinearAlgebra.Diagonal(x)
