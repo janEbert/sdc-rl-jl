@@ -159,7 +159,7 @@ end
 
 function step!(env, u, residual, action)
     Q_delta = get_preconditioner(env, action)
-    P_inverse = inv(LinearAlgebra.I(env.num_nodes) - env.lambda .* env.dt .* Q_delta)
+    P_inverse = inv(LinearAlgebra.I(env.num_nodes) .- env.lambda .* env.dt .* Q_delta)
 
     u += P_inverse * residual
     residual = env.initial_u - env.C * u
