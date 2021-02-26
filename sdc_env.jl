@@ -18,7 +18,7 @@ end
 function get_preconditioner(env, action, ::LUPreconditioner)
     Q_T = transpose(env.Q)
     factorization = LinearAlgebra.lu(Q_T)
-    U = factoriation.U
+    U = factorization.U
     transpose(U)
 end
 
