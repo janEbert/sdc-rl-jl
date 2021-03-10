@@ -1,0 +1,4 @@
+# Result files
+*.jld2
+*.jld
+*.bson
