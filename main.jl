@@ -309,7 +309,7 @@ function episode_loss!(env, model, stepwise=true)
     while !episode_over(env)
         total_loss += sequence_loss(env, model, u, residual, action)
     end
-    total_loss
+    (total_loss, env.num_steps, env.last_residual_norm)
 end
 
 function test_model_random!(env, model, num_test_episodes)
@@ -320,24 +320,32 @@ function test_model_random!(env, model, num_test_episodes)
     end
 
     losses = Float64[]
+    nums_steps = Int[]
+    residual_norms = Float64[]
     for _ in 1:num_test_episodes
         reset!(env, test_rng)
-        loss = episode_loss!(env, model, predict_stepwise)
+        (loss, num_steps, residual_norm) = episode_loss!(env, model, predict_stepwise)
         push!(losses, loss)
+        push!(nums_steps, num_steps)
+        push!(residual_norms, residual_norm)
     end
-    losses
+    losses, nums_steps, residual_norms
 end
 
 function test_model_linrange!(env, model, num_test_episodes)
     lambdas = range(0, -100, length=num_test_episodes)
 
     losses = Float64[]
+    nums_steps = Int[]
+    residual_norms = Float64[]
     for lambda in lambdas
         set_lambda!(env, lambda)
-        loss = episode_loss!(env, model, predict_stepwise)
+        (loss, num_steps, residual_norm) = episode_loss!(env, model, predict_stepwise)
         push!(losses, loss)
+        push!(nums_steps, num_steps)
+        push!(residual_norms, residual_norm)
     end
-    losses
+    losses, nums_steps, residual_norms
 end
 
 function test_model!(env, model, num_test_episodes)
@@ -421,8 +429,14 @@ function main(model)
                                  lambda_real_interval, lambda_imag_interval)
 
     log_with(logger, string("Started script at ", script_start_time, "."))
-    test_loss = mean(test_model!(env, model, num_training_test_episodes))
-    log_with(logger, string("Mean test loss after 0 episodes of training: ", test_loss))
+    test_losses, test_nums_steps, test_residual_norms = test_model!(
+        env, model, num_training_test_episodes)
+    test_loss = mean(test_losses)
+    test_num_steps = mean(test_nums_steps)
+    test_residual_norm = mean(test_residual_norms)
+    log_with(logger, string("Mean test loss after 0 episodes of training: ", test_loss,
+                            "; Mean num steps: ", test_num_steps, "; ",
+                            "Mean final norm(residuum): ", test_residual_norm))
     flush(logfile)
 
     if test_only
@@ -437,9 +451,15 @@ function main(model)
         push!(episode_losses, sum(losses))
 
         if episode % test_interval == 0
-            test_loss = mean(test_model!(env, model, num_training_test_episodes))
+            test_losses, test_nums_steps, test_residual_norms = test_model!(
+                env, model, num_training_test_episodes)
+            test_loss = mean(test_losses)
+            test_num_steps = mean(test_nums_steps)
+            test_residual_norm = mean(test_residual_norms)
             log_with(logger,
                      string(episode, " episodes; Mean test loss: ", test_loss, "; ",
+                            "Mean num steps: ", test_num_steps, "; ",
+                            "Mean final norm(residuum): ", test_residual_norm, "; ",
                             "Duration: ", time() - start_time, " sec"))
             flush(logfile)
         end
