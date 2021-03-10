@@ -16,6 +16,7 @@ const seed = 0
 const test_on_random = false
 const use_fixed_test_rng = false
 const test_seed = 1
+const test_only = false
 # Doesn't work with Zygote
 const use_gpu = false
 
@@ -355,6 +356,7 @@ function build_argslist()
         :test_on_random,
         :use_fixed_test_rng,
         :test_seed,
+        :test_only,
         :use_gpu,
 
         :M,
@@ -422,6 +424,11 @@ function main(model)
     test_loss = mean(test_model!(env, model, num_training_test_episodes))
     log_with(logger, string("Mean test loss after 0 episodes of training: ", test_loss))
     flush(logfile)
+
+    if test_only
+        close(logfile)
+        return
+    end
 
     episode_losses = Float64[]
     start_time = time()
