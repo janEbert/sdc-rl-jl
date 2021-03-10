@@ -355,6 +355,7 @@ function build_argslist()
         :test_on_random,
         :use_fixed_test_rng,
         :test_seed,
+        :use_gpu,
 
         :M,
         :dt,
